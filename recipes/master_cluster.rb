@@ -163,6 +163,7 @@ if master_servers.first['fqdn'] == node['fqdn']
             --name=#{node['cookbook-openshift3']['openshift_master_config_dir']}/openshift-service-serving-signer \
             --serial=#{node['cookbook-openshift3']['openshift_master_config_dir']}/service-signer.serial.txt"
     creates "#{node['cookbook-openshift3']['openshift_master_config_dir']}/service-signer.key"
+  end
 
   master_peers.each do |peer_server|
     directory "#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{peer_server['fqdn']}" do
