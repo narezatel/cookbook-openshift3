@@ -156,6 +156,14 @@ if master_servers.first['fqdn'] == node['fqdn']
     creates "#{node['cookbook-openshift3']['openshift_master_config_dir']}/master.server.key"
   end
 
+  execute 'Create the signer certificate' do
+    command "#{node['cookbook-openshift3']['openshift_common_admin_binary']} ca create-signer-cert \
+            --cert=#{node['cookbook-openshift3']['openshift_master_config_dir']}/service-signer.crt \
+            --key=#{node['cookbook-openshift3']['openshift_master_config_dir']}/service-signer.key \
+            --name=#{node['cookbook-openshift3']['openshift_master_config_dir']}/openshift-service-serving-signer \
+            --serial=#{node['cookbook-openshift3']['openshift_master_config_dir']}/service-signer.serial.txt"
+    creates "#{node['cookbook-openshift3']['openshift_master_config_dir']}/service-signer.key"
+
   master_peers.each do |peer_server|
     directory "#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{peer_server['fqdn']}" do
       mode '0755'
@@ -164,7 +172,7 @@ if master_servers.first['fqdn'] == node['fqdn']
       recursive true
     end
 
-    %w(ca.crt ca.key ca.serial.txt admin.crt admin.key admin.kubeconfig master.kubelet-client.crt master.kubelet-client.key openshift-master.crt openshift-master.key openshift-master.kubeconfig openshift-registry.crt openshift-registry.key openshift-registry.kubeconfig openshift-router.crt master.proxy-client.crt master.proxy-client.key openshift-router.key openshift-router.kubeconfig serviceaccounts.private.key serviceaccounts.public.key).each do |master_certificate|
+    %w(ca.crt ca.key ca.serial.txt admin.crt admin.key admin.kubeconfig master.kubelet-client.crt master.kubelet-client.key openshift-master.crt openshift-master.key openshift-master.kubeconfig openshift-registry.crt openshift-registry.key openshift-registry.kubeconfig openshift-router.crt master.proxy-client.crt master.proxy-client.key openshift-router.key openshift-router.kubeconfig serviceaccounts.private.key serviceaccounts.public.key service-signer.crt service-signer.key).each do |master_certificate|
       remote_file "#{node['cookbook-openshift3']['master_generated_certs_dir']}/openshift-#{peer_server['fqdn']}/#{master_certificate}" do
         source "file://#{node['cookbook-openshift3']['openshift_master_config_dir']}/#{master_certificate}"
       end
