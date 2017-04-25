@@ -15,11 +15,13 @@ action :redeploy do
   execute 'Backup etcd stuff' do
     command "tar czvf etcd-backup-$(date +%s).tar.gz -C #{node['cookbook-openshift3']['etcd_conf_dir']}/ca #{node['cookbook-openshift3']['etcd_conf_dir']}/ca.crt /var/www/html/etcd --ignore-failed-read --remove-files || true"
     cwd node['cookbook-openshift3']['etcd_conf_dir']
+    only_if "[ -a #{node['cookbook-openshift3']['etcd_conf_dir']} ]"
   end
   %W(peer* server* etcd-#{node['fqdn']}.tgz).each do |certs|
     execute 'Delete Peer/Server certs' do
       command "rm -rf #{certs} || true"
       cwd node['cookbook-openshift3']['etcd_conf_dir']
+      only_if "[ -a #{node['cookbook-openshift3']['etcd_conf_dir']} ]"
     end
   end
   execute 'Backup master stuff' do
@@ -41,6 +43,11 @@ action :redeploy do
     command 'rm -f config'
     cwd '/root/.kube'
     only_if '[ -a /root/.kube ]'
+  end
+  execute 'Remove node certs' do
+    command "rm -rf #{node['cookbook-openshift3']['openshift_node_generated_configs_dir']}"
+    cwd node['cookbook-openshift3']['openshift_master_config_dir']
+    only_if "[ -a #{node['cookbook-openshift3']['openshift_node_generated_configs_dir']} ]"
   end
   include_recipe 'cookbook-openshift3::default'
   new_resource.updated_by_last_action(true)
