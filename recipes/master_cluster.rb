@@ -14,53 +14,7 @@ node['cookbook-openshift3']['enabled_firewall_rules_master_cluster'].each do |ru
   end
 end
 
-# TODO: what about or node.recipe?('cookbook-opendshift3::is_*') scenario?
-if etcd_servers.first['fqdn'] != master_servers.first['fqdn']
-  directory node['cookbook-openshift3']['etcd_ca_dir'] do
-    owner 'root'
-    group 'root'
-    mode '0700'
-    action :create
-    recursive true
-  end
-
-  template node['cookbook-openshift3']['etcd_openssl_conf'] do
-    source 'openssl.cnf.erb'
-  end
-
-  %w(certs crl fragments).each do |etcd_ca_sub_dir|
-    directory "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_ca_sub_dir}" do
-      owner 'root'
-      group 'root'
-      mode '0700'
-      action :create
-      recursive true
-    end
-  end
-
-  execute "ETCD Generate index.txt #{node['fqdn']}" do
-    command 'touch index.txt'
-    cwd node['cookbook-openshift3']['etcd_ca_dir']
-    creates "#{node['cookbook-openshift3']['etcd_ca_dir']}/index.txt"
-  end
-
-  file "#{node['cookbook-openshift3']['etcd_ca_dir']}/serial" do
-    content '01'
-    action :create_if_missing
-  end
-
-  %w(ca.crt ca.key).each do |etcd_crt|
-    remote_file "Retrieve CA certificates #{etcd_crt} from ETCD Master[#{etcd_servers.first['fqdn']}]" do
-      path "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_crt}"
-      source "http://#{etcd_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/generated_certs/etcd/#{etcd_crt}"
-      action :create_if_missing
-      retries 10
-      retry_delay 5
-    end
-  end
-end
-
-if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
+if master_servers.first['fqdn'] == node['fqdn']
   %W(/var/www/html/master #{node['cookbook-openshift3']['master_generated_certs_dir']}).each do |path|
     directory path do
       mode '0755'
@@ -101,6 +55,7 @@ if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opends
   end
 end
 
+# On all nodes...
 remote_file "Retrieve client certificate from Master[#{master_servers.first['fqdn']}]" do
   path "#{node['cookbook-openshift3']['openshift_master_config_dir']}/openshift-master-#{node['fqdn']}.tgz"
   source "http://#{master_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/master/generated_certs/openshift-master-#{node['fqdn']}.tgz"
@@ -124,7 +79,7 @@ end
   end
 end
 
-if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
+if master_servers.first['fqdn'] == node['fqdn']
   if node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_name'] && node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_item_name']
     secret_file = node['cookbook-openshift3']['openshift_master_ca_certificate']['secret_file'] || nil
     ca_vars = Chef::EncryptedDataBagItem.load(node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_name'], node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_item_name'], secret_file)
@@ -202,7 +157,7 @@ if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opends
   end
 end
 
-if master_servers.first['fqdn'] != node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
+if master_servers.first['fqdn'] != node['fqdn']
   remote_file "Retrieve peer certificate from Master[#{master_servers.first['fqdn']}]" do
     path "#{node['cookbook-openshift3']['openshift_master_config_dir']}/openshift-#{node['fqdn']}.tgz"
     source "http://#{master_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/master/generated_certs/openshift-#{node['fqdn']}.tgz"

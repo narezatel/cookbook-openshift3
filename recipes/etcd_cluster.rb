@@ -7,11 +7,19 @@
 etcd_servers = node['cookbook-openshift3']['etcd_servers']
 
 if etcd_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-opendshift3::is_etcd')
-  if etcd_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_etcd')
+  if etcd_servers.first['fqdn'] == node['fqdn']
     package 'httpd' do
       notifies :run, 'ruby_block[Change HTTPD port xfer]', :immediately
       notifies :enable, 'service[httpd]', :immediately
     end
+    directory node['cookbook-openshift3']['etcd_ca_dir'] do
+      owner 'root'
+      group 'root'
+      mode '0700'
+      action :create
+      recursive true
+    end
+
     %w(certs crl fragments).each do |etcd_ca_sub_dir|
       directory "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_ca_sub_dir}" do
         owner 'root'
@@ -129,6 +137,16 @@ if etcd_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } or no
         Mixlib::ShellOut.new('systemctl mask etcd').run_command
       end
       action :nothing
+    end
+  end
+
+  %w(ca.crt ca.key).each do |etcd_crt|
+    remote_file "Retrieve CA certificates #{etcd_crt} from ETCD Master[#{etcd_servers.first['fqdn']}]" do
+      path "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_crt}"
+      source "http://#{etcd_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/generated_certs/etcd/#{etcd_crt}"
+      action :create_if_missing
+      retries 10
+      retry_delay 5
     end
   end
 

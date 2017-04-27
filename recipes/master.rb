@@ -113,7 +113,7 @@ if master_servers.find { |server_master| server_master['fqdn'] == node['fqdn'] }
     creates '/root/.kube/config'
   end
 
-  if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
+  if master_servers.first['fqdn'] == node['fqdn']
     include_recipe 'cookbook-openshift3::nodes_certificates'
   end
 end
