@@ -8,7 +8,7 @@ master_servers = node['cookbook-openshift3']['master_servers']
 node_servers = node['cookbook-openshift3']['node_servers']
 path_certificate = node['cookbook-openshift3']['use_wildcard_nodes'] ? 'wildcard_nodes.tgz' : "#{node['fqdn']}.tgz"
 
-if node_servers.find { |server_node| server_node['fqdn'] == node['fqdn'] }
+if node_servers.find { |server_node| server_node['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-openshift3::is_node')
   file '/usr/local/etc/.firewall_node_additional.txt' do
     content node['cookbook-openshift3']['enabled_firewall_additional_rules_node'].join('\n')
     owner 'root'

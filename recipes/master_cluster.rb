@@ -14,6 +14,7 @@ node['cookbook-openshift3']['enabled_firewall_rules_master_cluster'].each do |ru
   end
 end
 
+# TODO: what about or node.recipe?('cookbook-opendshift3::is_*') scenario?
 if etcd_servers.first['fqdn'] != master_servers.first['fqdn']
   directory node['cookbook-openshift3']['etcd_ca_dir'] do
     owner 'root'
@@ -59,7 +60,7 @@ if etcd_servers.first['fqdn'] != master_servers.first['fqdn']
   end
 end
 
-if master_servers.first['fqdn'] == node['fqdn']
+if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
   %W(/var/www/html/master #{node['cookbook-openshift3']['master_generated_certs_dir']}).each do |path|
     directory path do
       mode '0755'
@@ -123,7 +124,7 @@ end
   end
 end
 
-if master_servers.first['fqdn'] == node['fqdn']
+if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
   if node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_name'] && node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_item_name']
     secret_file = node['cookbook-openshift3']['openshift_master_ca_certificate']['secret_file'] || nil
     ca_vars = Chef::EncryptedDataBagItem.load(node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_name'], node['cookbook-openshift3']['openshift_master_ca_certificate']['data_bag_item_name'], secret_file)
@@ -201,7 +202,7 @@ if master_servers.first['fqdn'] == node['fqdn']
   end
 end
 
-if master_servers.first['fqdn'] != node['fqdn']
+if master_servers.first['fqdn'] != node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
   remote_file "Retrieve peer certificate from Master[#{master_servers.first['fqdn']}]" do
     path "#{node['cookbook-openshift3']['openshift_master_config_dir']}/openshift-#{node['fqdn']}.tgz"
     source "http://#{master_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/master/generated_certs/openshift-#{node['fqdn']}.tgz"
