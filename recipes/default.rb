@@ -35,8 +35,8 @@ include_recipe 'cookbook-openshift3::common'
 include_recipe 'cookbook-openshift3::master'
 include_recipe 'cookbook-openshift3::node'
 
-if master_servers.find { |server_master| server_master['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-opendshift3::is_master')
-  if master_servers.first['fqdn'] == node['fqdn'] or node.recipe?('cookbook-opendshift3::is_first_master')
+if master_servers.find { |server_master| server_master['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-opendshift3::is_master')
+  if master_servers.first['fqdn'] == node['fqdn'] || node.recipe?('cookbook-opendshift3::is_first_master')
     include_recipe 'cookbook-openshift3::master_config_post'
   end
 end

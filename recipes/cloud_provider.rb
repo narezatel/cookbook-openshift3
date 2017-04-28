@@ -5,8 +5,8 @@
 # Copyright (c) 2017 The Authors, All Rights Reserved.
 
 if node['cookbook-openshift3']['openshift_cloud_provider']
-  is_master_server = node['cookbook-openshift3']['master_servers'].find { |server_master| server_master['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-opendshift3::is_master')
-  is_node_server = node['cookbook-openshift3']['node_servers'].find { |server_node| server_node['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-opendshift3::is_node')
+  is_master_server = node['cookbook-openshift3']['master_servers'].find { |server_master| server_master['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-opendshift3::is_master')
+  is_node_server = node['cookbook-openshift3']['node_servers'].find { |server_node| server_node['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-opendshift3::is_node')
 
   if is_master_server || is_node_server
     directory node['cookbook-openshift3']['openshift_cloud_provider_config_dir'] do

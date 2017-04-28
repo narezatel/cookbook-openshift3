@@ -9,7 +9,7 @@ version = node['cookbook-openshift3']['deploy_containerized'] == true ? node['co
 
 include_recipe 'cookbook-openshift3::etcd_cluster'
 
-if master_servers.find { |server_master| server_master['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-openshift3::is_master')
+if master_servers.find { |server_master| server_master['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-openshift3::is_master')
   if node['cookbook-openshift3']['deploy_containerized']
     execute 'Pull CLI docker image' do
       command "docker pull #{node['cookbook-openshift3']['openshift_docker_cli_image']}:#{node['cookbook-openshift3']['openshift_docker_image_version']}"
