@@ -7,7 +7,7 @@
 etcd_servers = node['cookbook-openshift3']['etcd_servers']
 master_servers = node['cookbook-openshift3']['master_servers']
 
-if master_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-opendshift3::is_etcd')
+if master_servers.find { |server_master| server_master['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-opendshift3::is_master')
   if master_servers.first['fqdn'] == node['fqdn']
     package 'httpd' do
       notifies :run, 'ruby_block[Change HTTPD port xfer]', :immediately
@@ -113,6 +113,9 @@ if master_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } || 
       action :remove_node
     end
   end
+end
+
+if etcd_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } || node.recipe?('cookbook-opendshift3::is_etcd')
 
   node['cookbook-openshift3']['enabled_firewall_rules_etcd'].each do |rule|
     iptables_rule rule do
