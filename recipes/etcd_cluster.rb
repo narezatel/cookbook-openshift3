@@ -5,9 +5,10 @@
 # Copyright (c) 2015 The Authors, All Rights Reserved.
 
 etcd_servers = node['cookbook-openshift3']['etcd_servers']
+master_servers = node['cookbook-openshift3']['master_servers']
 
-if etcd_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-opendshift3::is_etcd')
-  if etcd_servers.first['fqdn'] == node['fqdn']
+if master_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } or node.recipe?('cookbook-opendshift3::is_etcd')
+  if master_servers.first['fqdn'] == node['fqdn']
     package 'httpd' do
       notifies :run, 'ruby_block[Change HTTPD port xfer]', :immediately
       notifies :enable, 'service[httpd]', :immediately
@@ -67,7 +68,7 @@ if etcd_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } or no
       end
     end
 
-    etcd_servers.each do |etcd_master|
+    master_servers.each do |etcd_master|
       directory "#{node['cookbook-openshift3']['etcd_generated_certs_dir']}/etcd-#{etcd_master['fqdn']}" do
         mode '0755'
         owner 'apache'
@@ -141,18 +142,18 @@ if etcd_servers.find { |server_etcd| server_etcd['fqdn'] == node['fqdn'] } or no
   end
 
   %w(ca.crt ca.key).each do |etcd_crt|
-    remote_file "Retrieve CA certificates #{etcd_crt} from ETCD Master[#{etcd_servers.first['fqdn']}]" do
+    remote_file "Retrieve CA certificates #{etcd_crt} from ETCD Master[#{master_servers.first['fqdn']}]" do
       path "#{node['cookbook-openshift3']['etcd_ca_dir']}/#{etcd_crt}"
-      source "http://#{etcd_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/generated_certs/etcd/#{etcd_crt}"
+      source "http://#{master_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/generated_certs/etcd/#{etcd_crt}"
       action :create_if_missing
       retries 10
       retry_delay 5
     end
   end
 
-  remote_file "Retrieve certificate from ETCD Master[#{etcd_servers.first['fqdn']}]" do
+  remote_file "Retrieve certificate from ETCD Master[#{master_servers.first['fqdn']}]" do
     path "#{node['cookbook-openshift3']['etcd_conf_dir']}/etcd-#{node['fqdn']}.tgz"
-    source "http://#{etcd_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/generated_certs/etcd-#{node['fqdn']}.tgz"
+    source "http://#{master_servers.first['ipaddress']}:#{node['cookbook-openshift3']['httpd_xfer_port']}/etcd/generated_certs/etcd-#{node['fqdn']}.tgz"
     action :create_if_missing
     notifies :run, 'execute[Extract certificate to ETCD folder]', :immediately
     retries 12
