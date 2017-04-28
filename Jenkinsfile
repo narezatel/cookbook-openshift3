@@ -24,7 +24,7 @@ try {
 
   stage('kitchen') {
     node(nodename) {
-      dir('cookbook-openshift3') {
+      dir(builddir) {
         def l = sh(script: 'kitchen list -b', returnStdout: true).trim().tokenize()
         for (f in l) {
           // Seeing persistent 'SCP did not finish successfully (255):  (Net::SCP::Error)' errors, so retry added.
